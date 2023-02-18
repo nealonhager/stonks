@@ -1,7 +1,7 @@
 import csv
 import os
 import csv
-from generate import write_numbers_to_csv
+from generate import clean_data
 
 
 class InsufficientFundsException(Exception):
@@ -219,6 +219,7 @@ if __name__ == "__main__":
     folder = "simulate/outputs/data"
     files_names = get_filenames_in_folder(folder)
     initial_bank_balance = 100.0
+    clean_data(f"./simulate/outputs/transactions/*")
 
     print(
         f"{'initial balance' : <20}",

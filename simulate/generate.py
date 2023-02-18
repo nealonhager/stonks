@@ -13,6 +13,8 @@ def plot_numbers(numbers, filename, override=False):
     """
     Plots a line graph of a list of numbers and saves it as an image
     """
+    plt.cla()
+    plt.figure(figsize=(12,6))
     plt.plot(numbers)
     plt.xlabel('Minutes')
     plt.ylabel('$')
@@ -51,7 +53,7 @@ def generate_data():
     timeline = 390 # 390 trading minutes in a day
     initial_price = 100
     price_variance = 0.1
-    iterations = 1
+    iterations = 10
 
     # Generate daily stock prices
     for _ in range(iterations):
