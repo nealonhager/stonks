@@ -73,29 +73,32 @@ def maximize_bank_balance(prices: list, bank_account: Bank, brokerage: Brokerage
     that can be achieved using the buy low sell high strategy, where fractional shares of stock
     can be purchased.
     """
-    num_shares = 0
     log = []
+    transaction_modifier = 0.5
     
     for i in range(len(prices)):
         temp = {"price":prices[i]}
         if i > 0 and prices[i] > prices[i-1]:
             # Sell all shares at the current price
             temp["action"] = "sell"
-            profit = brokerage.get_position() * prices[i]
-            brokerage.reduce_position(brokerage.get_position())
+            profit = brokerage.get_position() * prices[i] * transaction_modifier
+            brokerage.reduce_position(brokerage.get_position() * transaction_modifier)
             bank_account.deposit(profit)
         elif i < len(prices)-1 and prices[i] < prices[i+1]:
             # Buy
-            add_shares = 0.25 * (bank_account.get_balance() // prices[i])
-            purchase_cost = add_shares * prices[i]
+            shares = (bank_account.get_balance() // prices[i]) * transaction_modifier
+            purchase_cost = shares * prices[i]
             bank_account.withdraw(purchase_cost)
-            brokerage.add_position(add_shares)
+            brokerage.add_position(shares)
             temp["action"] = "buy"
 
         log.append(temp)
     
     # Sell any remaining shares at the final price
-    bank_account.deposit(num_shares * prices[-1])
+    bank_account.deposit(brokerage.get_position() * prices[-1])
+    brokerage.reduce_position(brokerage.get_position())
+
+    # Make transaction CSVs
     write_dicts_to_csv(log, "log.csv")
     write_numbers_to_csv(bank_account.get_history(),"bank.csv")
     write_numbers_to_csv(brokerage.get_history(), "brokerage.csv")
