@@ -31,16 +31,15 @@ def get_buying_power():
 def main():
     setup()
     get_buying_power()
-    # schedule.every().minute.do(get_buying_power)
+    schedule.every().minute.do(get_buying_power)
     
-    # while True:
-    #     schedule.run_pending()
-    #     time.sleep(10)
+    while True:
+        schedule.run_pending()
+        time.sleep(10)
+
     # orders.order_buy_fractional_by_price(symbol, amountInDollars, timeInForce='gfd', extendedHours=False, jsonify=True)
     # https://robin-stocks.readthedocs.io/en/latest/robinhood.html#robin_stocks.robinhood.orders.order_buy_fractional_by_price
     # 'gtc' = good until cancelled. 'gfd' = good for the day. 'ioc' = immediate or cancel. 'opg' execute at opening.
-
-    # teardown()
 
 
 if __name__ == '__main__':
