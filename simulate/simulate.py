@@ -111,7 +111,7 @@ def determine_brokerage_values(brokerage_history: list, stock_prices: list):
     return brokerage_values
 
 
-def determine_portfolio_values(brokerage_values:list, bank_history:list):
+def determine_portfolio_values(brokerage_values: list, bank_history: list):
     """
     Given the brokerage values and bank history, return a list of portfolio values
     """
@@ -135,7 +135,16 @@ def create_transaction_sheet(
 
     with open(file_name, mode="w", newline="") as file:
         writer = csv.DictWriter(
-            file, fieldnames=["stock price", "cash", "my stonks", "value of my stocks", "action", "cash delta", "portfolio"]
+            file,
+            fieldnames=[
+                "stock price",
+                "cash",
+                "my stonks",
+                "value of my stocks",
+                "action",
+                "cash delta",
+                "portfolio",
+            ],
         )
         writer.writeheader()
         for i in range(len(stock_prices)):
@@ -147,7 +156,7 @@ def create_transaction_sheet(
                     "value of my stocks": brokerage_values[i],
                     "action": actions[i],
                     "cash delta": deltas[i],
-                    "portfolio": portfolio_values[i]
+                    "portfolio": portfolio_values[i],
                 }
             )
 
@@ -168,14 +177,23 @@ def maximize_bank_balance(
     for i in range(len(prices)):
         if i > 0 and prices[i] > prices[i - 1]:
             # Sell
-            profit = brokerage.get_position() * prices[i] * min(transaction_modifier * buy_streak, max_transaction_modifier)
-            brokerage.reduce_position(brokerage.get_position() * min(transaction_modifier * buy_streak, max_transaction_modifier))
+            profit = (
+                brokerage.get_position()
+                * prices[i]
+                * min(transaction_modifier * buy_streak, max_transaction_modifier)
+            )
+            brokerage.reduce_position(
+                brokerage.get_position()
+                * min(transaction_modifier * buy_streak, max_transaction_modifier)
+            )
             bank_account.deposit(profit)
             sell_streak += 1
             buy_streak = 1
         elif i < len(prices) - 1 and prices[i] < prices[i + 1]:
             # Buy
-            shares = (bank_account.get_balance() / prices[i]) * min(transaction_modifier * sell_streak, max_transaction_modifier)
+            shares = (bank_account.get_balance() / prices[i]) * min(
+                transaction_modifier * sell_streak, max_transaction_modifier
+            )
             purchase_cost = shares * prices[i]
             bank_account.withdraw(purchase_cost)
             brokerage.add_position(shares)
