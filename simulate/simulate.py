@@ -160,20 +160,27 @@ def maximize_bank_balance(
     that can be achieved using the buy low sell high strategy, where fractional shares of stock
     can be purchased.
     """
-    transaction_modifier = 0.5
+    max_transaction_modifier = 0.5
+    transaction_modifier = 0.2
+    sell_streak = 1
+    buy_streak = 1
 
     for i in range(len(prices)):
         if i > 0 and prices[i] > prices[i - 1]:
             # Sell
-            profit = brokerage.get_position() * prices[i] * transaction_modifier
-            brokerage.reduce_position(brokerage.get_position() * transaction_modifier)
+            profit = brokerage.get_position() * prices[i] * min(transaction_modifier * buy_streak, max_transaction_modifier)
+            brokerage.reduce_position(brokerage.get_position() * min(transaction_modifier * buy_streak, max_transaction_modifier))
             bank_account.deposit(profit)
+            sell_streak += 1
+            buy_streak = 1
         elif i < len(prices) - 1 and prices[i] < prices[i + 1]:
             # Buy
-            shares = (bank_account.get_balance() / prices[i]) * transaction_modifier
+            shares = (bank_account.get_balance() / prices[i]) * min(transaction_modifier * sell_streak, max_transaction_modifier)
             purchase_cost = shares * prices[i]
             bank_account.withdraw(purchase_cost)
             brokerage.add_position(shares)
+            buy_streak += 1
+            sell_streak = 1
         elif i == len(prices) - 2:
             break
         else:
@@ -221,16 +228,6 @@ if __name__ == "__main__":
     initial_bank_balance = 100.0
     clean_data(f"./simulate/outputs/transactions/*")
 
-    print(
-        f"{'initial balance' : <20}",
-        f"{'finishing bank balance' : ^20}",
-        f"{'profits' : >20}",
-    )
     for file_name in files_names:
         prices = read_stock_prices_from_csv(f"{folder}/{ file_name }")
         bank_balance = maximize_bank_balance(prices, Bank(100), Brokerage(), file_name)
-        print(
-            f"{initial_bank_balance : <20}",
-            f"{bank_balance : ^20}",
-            f"{bank_balance - initial_bank_balance: >20}",
-        )
