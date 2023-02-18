@@ -73,16 +73,16 @@ def write_dicts_to_csv(data, filename):
 
 
 def create_transaction_sheet(
-    bank_history: list, brokerage_history: list, file_name: str
+    stock_prices:list, bank_history: list, brokerage_history: list, file_name: str
 ):
     """
     Given the list of bank transactions and brokerage transactions, generate a transactions file
     """
     with open(file_name, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=["cash", "stonks"])
+        writer = csv.DictWriter(file, fieldnames=["stock prices", "cash", "stonks"])
         writer.writeheader()
         for i in range(len(bank_history)):
-            writer.writerow({"cash": bank_history[i], "stonks": brokerage_history[i]})
+            writer.writerow({"stock prices": stock_prices[i], "cash": bank_history[i], "stonks": brokerage_history[i]})
 
 
 def maximize_bank_balance(
@@ -113,6 +113,7 @@ def maximize_bank_balance(
     brokerage.reduce_position(brokerage.get_position())
 
     create_transaction_sheet(
+        prices,
         bank_account.get_history(),
         brokerage.get_history(),
         "simulate/outputs/transactions/transactions.csv",
