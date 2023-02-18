@@ -33,6 +33,28 @@ class Bank:
         return self.balance_history
 
 
+class Brokerage:
+    def __init__(self):
+        self.position = 0.0
+        self.position_history = [0.0]
+
+    def get_position(self):
+        return self.position
+
+    def add_position(self, count):
+        self.position += count
+        self.position_history.append(self.position)
+
+    def reduce_position(self, count):
+        if count > self.position:
+            raise InsufficientFundsException(f"Not enough funds in the account to withdraw {count} shared")
+        self.position -= count
+        self.position_history.append(self.position)
+
+    def get_history(self):
+        return self.position_history
+
+
 def write_dicts_to_csv(data, filename):
     """
     Given a list of dictionaries and a filename, writes the dictionaries to a CSV file.
@@ -45,7 +67,7 @@ def write_dicts_to_csv(data, filename):
             writer.writerow(row)
 
 
-def maximize_bank_balance(prices: list, bank_account: Bank):
+def maximize_bank_balance(prices: list, bank_account: Bank, brokerage: Brokerage):
     """
     Given a list of stock prices and an initial bank balance, returns the maximum bank balance
     that can be achieved using the buy low sell high strategy, where fractional shares of stock
@@ -59,14 +81,15 @@ def maximize_bank_balance(prices: list, bank_account: Bank):
         if i > 0 and prices[i] > prices[i-1]:
             # Sell all shares at the current price
             temp["action"] = "sell"
-            profit = num_shares * prices[i]
+            profit = brokerage.get_position() * prices[i]
+            brokerage.reduce_position(brokerage.get_position())
             bank_account.deposit(profit)
-            num_shares = 0
         elif i < len(prices)-1 and prices[i] < prices[i+1]:
-            # Buy as many shares as possible at the current price
-            num_shares += bank_account.get_balance() // prices[i]
-            purchase_cost = num_shares * prices[i]
+            # Buy
+            add_shares = 0.25 * (bank_account.get_balance() // prices[i])
+            purchase_cost = add_shares * prices[i]
             bank_account.withdraw(purchase_cost)
+            brokerage.add_position(add_shares)
             temp["action"] = "buy"
 
         log.append(temp)
@@ -75,6 +98,7 @@ def maximize_bank_balance(prices: list, bank_account: Bank):
     bank_account.deposit(num_shares * prices[-1])
     write_dicts_to_csv(log, "log.csv")
     write_numbers_to_csv(bank_account.get_history(),"bank.csv")
+    write_numbers_to_csv(brokerage.get_history(), "brokerage.csv")
     
     return bank_account.get_balance()
 
@@ -108,5 +132,5 @@ if __name__ == "__main__":
     # print(f"{'initial balance' : <20}", f"{'finishing bank balance' : ^20}", f"{'profits' : >20}")
     for file_name in files_names[:1]:
         prices = read_stock_prices_from_csv(f"{folder}/{ file_name }")
-        bank_balance = maximize_bank_balance(prices, Bank(100))
+        bank_balance = maximize_bank_balance(prices, Bank(100), Brokerage())
         # print(f"{initial_bank_balance : <20}", f"{bank_balance : ^20}", f"{bank_balance - initial_bank_balance: >20}")
