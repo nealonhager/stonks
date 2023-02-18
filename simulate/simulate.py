@@ -72,17 +72,52 @@ def write_dicts_to_csv(data, filename):
             writer.writerow(row)
 
 
+def determine_actions(bank_history: list):
+    """
+    Given the bank history, return a list of actions (buy/sell)
+    """
+    actions = [""]
+    for i in range(len(bank_history))[1:]:
+        actions.append("sell" if bank_history[i - 1] < bank_history[i] else "buy")
+
+    return actions
+
+
+def determine_delta(bank_history: list):
+    """
+    Given the bank history, return a list of profits
+    """
+    actions = [""]
+    for i in range(len(bank_history))[1:]:
+        actions.append(bank_history[i] - bank_history[i - 1])
+
+    return actions
+
+
 def create_transaction_sheet(
-    stock_prices:list, bank_history: list, brokerage_history: list, file_name: str
+    stock_prices: list, bank_history: list, brokerage_history: list, file_name: str
 ):
     """
     Given the list of bank transactions and brokerage transactions, generate a transactions file
     """
+    actions = determine_actions(bank_history)
+    deltas = determine_delta(bank_history)
+
     with open(file_name, mode="w", newline="") as file:
-        writer = csv.DictWriter(file, fieldnames=["stock prices", "cash", "stonks"])
+        writer = csv.DictWriter(
+            file, fieldnames=["stock price", "cash", "stonks", "action", "delta"]
+        )
         writer.writeheader()
         for i in range(len(bank_history)):
-            writer.writerow({"stock prices": stock_prices[i], "cash": bank_history[i], "stonks": brokerage_history[i]})
+            writer.writerow(
+                {
+                    "stock price": stock_prices[i],
+                    "cash": bank_history[i],
+                    "stonks": brokerage_history[i],
+                    "action": actions[i],
+                    "delta": deltas[i],
+                }
+            )
 
 
 def maximize_bank_balance(
