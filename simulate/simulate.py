@@ -118,7 +118,10 @@ def get_filenames_in_folder(folder_path):
 if __name__ == "__main__":
     folder = "simulate/outputs/data"
     files_names = get_filenames_in_folder(folder)
+    initial_bank_balance = 100.0
     
+    print(f"{'initial balance' : <20}", f"{'finishing bank balance' : ^20}", f"{'profits' : >20}")
     for file_name in files_names:
         prices = read_stock_prices_from_csv(f"{folder}/{ file_name }")
-        print(file_name, maximize_bank_balance(prices, 100.0))
+        bank_balance = maximize_bank_balance(prices, initial_bank_balance)
+        print(f"{initial_bank_balance : <20}", f"{bank_balance : ^20}", f"{bank_balance - initial_bank_balance: >20}")
