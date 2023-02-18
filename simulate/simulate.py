@@ -111,6 +111,17 @@ def determine_brokerage_values(brokerage_history: list, stock_prices: list):
     return brokerage_values
 
 
+def determine_portfolio_values(brokerage_values:list, bank_history:list):
+    """
+    Given the brokerage values and bank history, return a list of portfolio values
+    """
+    portfolio_values = []
+    for i in range(len(brokerage_values)):
+        portfolio_values.append(brokerage_values[i] + bank_history[i])
+
+    return portfolio_values
+
+
 def create_transaction_sheet(
     stock_prices: list, bank_history: list, brokerage_history: list, file_name: str
 ):
@@ -120,10 +131,11 @@ def create_transaction_sheet(
     actions = determine_actions(bank_history)
     deltas = determine_delta(bank_history)
     brokerage_values = determine_brokerage_values(brokerage_history, stock_prices)
+    portfolio_values = determine_portfolio_values(brokerage_values, bank_history)
 
     with open(file_name, mode="w", newline="") as file:
         writer = csv.DictWriter(
-            file, fieldnames=["stock price", "cash", "my stonks", "value of my stocks", "action", "cash delta"]
+            file, fieldnames=["stock price", "cash", "my stonks", "value of my stocks", "action", "cash delta", "portfolio"]
         )
         writer.writeheader()
         for i in range(len(stock_prices)):
@@ -135,6 +147,7 @@ def create_transaction_sheet(
                     "value of my stocks": brokerage_values[i],
                     "action": actions[i],
                     "cash delta": deltas[i],
+                    "portfolio": portfolio_values[i]
                 }
             )
 
