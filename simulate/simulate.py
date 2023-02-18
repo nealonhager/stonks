@@ -32,6 +32,9 @@ class Bank:
         self.balance -= amount
         self.balance_history.append(self.balance)
 
+    def filler(self):
+        self.balance_history.append(self.balance)
+
     def get_history(self):
         return self.balance_history
 
@@ -54,6 +57,9 @@ class Brokerage:
                 f"Not enough funds in the account to withdraw {count} shared"
             )
         self.position -= count
+        self.position_history.append(self.position)
+
+    def filler(self):
         self.position_history.append(self.position)
 
     def get_history(self):
@@ -94,6 +100,17 @@ def determine_delta(bank_history: list):
     return actions
 
 
+def determine_brokerage_values(brokerage_history: list, stock_prices: list):
+    """
+    Given the brokerage history and stock prices, return a list of the values of brokerage
+    """
+    brokerage_values = []
+    for i in range(len(stock_prices)):
+        brokerage_values.append(stock_prices[i] * brokerage_history[i])
+
+    return brokerage_values
+
+
 def create_transaction_sheet(
     stock_prices: list, bank_history: list, brokerage_history: list, file_name: str
 ):
@@ -102,20 +119,22 @@ def create_transaction_sheet(
     """
     actions = determine_actions(bank_history)
     deltas = determine_delta(bank_history)
+    brokerage_values = determine_brokerage_values(brokerage_history, stock_prices)
 
     with open(file_name, mode="w", newline="") as file:
         writer = csv.DictWriter(
-            file, fieldnames=["stock price", "cash", "stonks", "action", "delta"]
+            file, fieldnames=["stock price", "cash", "my stonks", "value of my stocks", "action", "cash delta"]
         )
         writer.writeheader()
-        for i in range(len(bank_history)):
+        for i in range(len(stock_prices)):
             writer.writerow(
                 {
                     "stock price": stock_prices[i],
                     "cash": bank_history[i],
-                    "stonks": brokerage_history[i],
+                    "my stonks": brokerage_history[i],
+                    "value of my stocks": brokerage_values[i],
                     "action": actions[i],
-                    "delta": deltas[i],
+                    "cash delta": deltas[i],
                 }
             )
 
@@ -138,10 +157,15 @@ def maximize_bank_balance(
             bank_account.deposit(profit)
         elif i < len(prices) - 1 and prices[i] < prices[i + 1]:
             # Buy
-            shares = (bank_account.get_balance() // prices[i]) * transaction_modifier
+            shares = (bank_account.get_balance() / prices[i]) * transaction_modifier
             purchase_cost = shares * prices[i]
             bank_account.withdraw(purchase_cost)
             brokerage.add_position(shares)
+        elif i == len(prices) - 2:
+            break
+        else:
+            brokerage.filler()
+            bank_account.filler()
 
     # Sell any remaining shares at the final price
     bank_account.deposit(brokerage.get_position() * prices[-1])
@@ -151,7 +175,7 @@ def maximize_bank_balance(
         prices,
         bank_account.get_history(),
         brokerage.get_history(),
-        "simulate/outputs/transactions/transactions.csv",
+        f"simulate/outputs/transactions/{file_name}",
     )
 
     return bank_account.get_balance()

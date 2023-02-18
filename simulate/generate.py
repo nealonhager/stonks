@@ -51,11 +51,11 @@ def generate_data():
     timeline = 390 # 390 trading minutes in a day
     initial_price = 100
     price_variance = 0.1
-    price_history = [initial_price]
-    iterations = 10
+    iterations = 1
 
     # Generate daily stock prices
     for _ in range(iterations):
+        price_history = [initial_price]
         for _ in range(1, timeline):
             # Calculate the new price based on the previous day's price
             last_price = price_history[-1]
@@ -67,3 +67,7 @@ def generate_data():
         now = calendar.timegm(time.gmtime())
         plot_numbers(price_history, f"simulate/outputs/images/{now}_{price_history[-1]-price_history[0]}.png")
         write_numbers_to_csv(price_history, f"simulate/outputs/data/{now}_{price_history[-1]-price_history[0]}.csv")
+
+
+if __name__ == "__main__":
+    generate_data()
