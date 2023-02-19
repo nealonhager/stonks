@@ -9,23 +9,6 @@ import csv
 import random
 
 
-def plot_numbers(numbers, filename, override=False):
-    """
-    Plots a line graph of a list of numbers and saves it as an image
-    """
-    plt.cla()
-    plt.figure(figsize=(12,6))
-    plt.plot(numbers)
-    plt.xlabel('Minutes')
-    plt.ylabel('$')
-    plt.title('Stonks')
-    if override:
-        plt.savefig("simulate/outputs/graph.png")
-    else:
-        plt.savefig(filename)
-    plt.gca().set_prop_cycle(None)
-
-
 def write_numbers_to_csv(numbers, filename):
     """
     Writes a list of numbers to a CSV file
@@ -66,9 +49,9 @@ def generate_data():
             # Add the new price to the price history list
             price_history.append(new_price)
 
-        now = calendar.timegm(time.gmtime())
-        plot_numbers(price_history, f"simulate/outputs/images/{now}_{price_history[-1]-price_history[0]}.png")
-        write_numbers_to_csv(price_history, f"simulate/outputs/data/{now}_{price_history[-1]-price_history[0]}.csv")
+        first_price = price_history[0]
+        last_price = price_history[-1]
+        write_numbers_to_csv(price_history, f"simulate/outputs/data/{initial_price}_{first_price}_{last_price}.csv")
 
 
 if __name__ == "__main__":

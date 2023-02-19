@@ -2,6 +2,7 @@ import csv
 import os
 import csv
 from generate import clean_data
+import matplotlib.pyplot as plt
 
 
 class InsufficientFundsException(Exception):
@@ -249,3 +250,20 @@ if __name__ == "__main__":
     for file_name in files_names:
         prices = read_stock_prices_from_csv(f"{folder}/{ file_name }")
         bank_balance = maximize_bank_balance(prices, Bank(100), Brokerage(), file_name)
+
+    folder = "simulate/outputs/transactions"
+    for file_name in get_filenames_in_folder(folder):
+        with open(f"{folder}/{ file_name }", "r") as f:
+            reader = csv.reader(f)
+            prices = [x[0] for x in reader]
+            f.seek(0)
+            portfolio = [x[-1] for x in reader]
+            plt.cla()
+            plt.figure(figsize=(12,6))
+            plt.plot([float(x) for x in prices[1:]], label="prices", color="gray")
+            plt.plot([float(x) for x in portfolio[1:]], label="portfolio", color="green")
+            plt.plot([float(portfolio[1]) for _ in portfolio[1:]], label="baseline", color="black")
+            plt.xlabel('Minutes')
+            plt.ylabel('$')
+            plt.title('Stonks')
+            plt.savefig(f"simulate/outputs/images/{file_name}".replace(".csv",".png"))
