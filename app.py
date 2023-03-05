@@ -13,16 +13,31 @@ from datetime import datetime, timezone
 
 
 class Stonks:
-    def __init__(self, ticker, debug=False):
+    """
+    Robo-trader
+    """
+
+    def __init__(self, ticker: str, debug: bool=False):
+        """
+        Constructor
+
+        Args:
+            ticker (str): Stock ticker symbol
+            debug (bool, optional): Whether or not to print debug statements.
+                Defaults to False.
+        """
         self.MAX_TRANSACTION_MODIFIER = 0.5
         self.TRANSACTION_MODIFIER = 0.2
         self.TICKER = ticker
         self.DEBUG = debug
-        self.historical = []
+        self.prices = []
         self.sell_streak = 1
         self.buy_streak = 1
 
     def setup(self):
+        """
+        Login and load env variables
+        """
         if self.DEBUG:
             print("Setting up")
         load_dotenv()
@@ -32,16 +47,47 @@ class Stonks:
         )
 
     def teardown(self):
+        """
+        Logs out and resets
+        """
         if self.DEBUG:
             print("Tearing Down")
         r.logout()
-        historical = []
 
     def get_buying_power(self):
+        """
+        Returns buyings power (USD)
+
+        Returns:
+            float: Buying power (USD)
+        """
         buying_power = r.profiles.load_account_profile()["cash_balances"]["buying_power"]
         return buying_power
 
+    def get_holdings(self, symbol:str):
+        """
+        Returns holding info for a symbol
+
+        Args:
+            symbol (str): Stock ticker symbol
+
+        Returns:
+            dict: Holdings info for symbol
+        """
+        holdings = account.build_holdings()[symbol]
+        return holdings
+
     def buy(self, symbol:str, value: float):
+        """
+        Buys a dollar amount of a stock
+
+        Args:
+            symbol (str): Stock ticker symbol
+            value (float): USD
+
+        Returns:
+            dict: Order data
+        """
         if self.DEBUG:
             print({
                 "symbol": symbol,
@@ -56,6 +102,16 @@ class Stonks:
         return order
 
     def sell(self, symbol:str, value: float):
+        """
+        Sells a dollar amount of a stock
+
+        Args:
+            symbol (str): Stock ticker symbol
+            value (float): USD
+
+        Returns:
+            dict: Order data
+        """
         if self.DEBUG:
             print({
                 "symbol": symbol,
@@ -70,28 +126,40 @@ class Stonks:
         return order
 
     def in_trading_hours(self):
+        """
+        Determines if able to buy/sell
+
+        Returns:
+            bool: Ability to trade
+        """
         market_open = markets.get_market_today_hours("XNYS")["is_open"]
 
         return market_open
 
     def trade(self):
+        """
+        Buy/sell
+        """
         latest_price = stonks.get_latest_price(self.TICKER)[0]
-        buying_power = self.get_buying_power()
 
         if not self.in_trading_hours():
             print("Market Closed")
             return
 
-        self.historical.append({
+        self.prices.append({
             "time": datetime.now(timezone.utc),
             "price": latest_price
         })
 
-        if len( self.historical ) == 1:
+        if len( self.prices ) == 1:
             pass
-        elif self.historical[-2]["price"] < self.historical[-1]["price"]:
+        elif self.prices[-2]["price"] < self.prices[-1]["price"]:
+            # Sell
+            self.get_holdings(self.symbol) * min(self.prices[-1] * self.sell_streak, self.MAX_TRANSACTION_MODIFIER)
             self.sell(symbol=self.TICKER, value=1)
         else:
+            # Buy
+            self.get_buying_power() * min(self.prices[-1] * self.buy_streak, self.MAX_TRANSACTION_MODIFIER)
             self.buy(symbol=self.TICKER, value=1)
 
 
@@ -104,8 +172,6 @@ def main():
         schedule.run_pending()
         print(".", end="")
         time.sleep(1)
-
-    s.teardown()
 
 
 if __name__ == '__main__':
