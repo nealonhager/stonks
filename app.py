@@ -17,7 +17,7 @@ class Stonks:
     Robo-trader
     """
 
-    def __init__(self, ticker: str, debug: bool=False):
+    def __init__(self, ticker: str, debug: bool = False):
         """
         Constructor
 
@@ -41,10 +41,7 @@ class Stonks:
         if self.DEBUG:
             print("Setting up")
         load_dotenv()
-        r.login(
-            os.getenv("ROBINHOOD_USERNAME"),
-            os.getenv("ROBINHOOD_PASSWORD")
-        )
+        r.login(os.getenv("ROBINHOOD_USERNAME"), os.getenv("ROBINHOOD_PASSWORD"))
 
     def teardown(self):
         """
@@ -61,10 +58,12 @@ class Stonks:
         Returns:
             float: Buying power (USD)
         """
-        buying_power = r.profiles.load_account_profile()["cash_balances"]["buying_power"]
+        buying_power = r.profiles.load_account_profile()["cash_balances"][
+            "buying_power"
+        ]
         return buying_power
 
-    def get_holdings(self, symbol:str):
+    def get_holdings(self, symbol: str):
         """
         Returns holding info for a symbol
 
@@ -77,7 +76,7 @@ class Stonks:
         holdings = account.build_holdings()[symbol]
         return holdings
 
-    def buy(self, symbol:str, value: float):
+    def buy(self, symbol: str, value: float):
         """
         Buys a dollar amount of a stock
 
@@ -89,19 +88,20 @@ class Stonks:
             dict: Order data
         """
         if self.DEBUG:
-            print({
-                "symbol": symbol,
-                "value": value,
-                "action": "buy"
-            })
+            print({"symbol": symbol, "value": value, "action": "buy"})
 
-        order = orders.order_buy_fractional_by_price(symbol, value, timeInForce='gfd', jsonify=True)
+        order = orders.order_buy_fractional_by_price(
+            symbol,
+            value,
+            timeInForce="gfd",
+            jsonify=True,
+        )
         self.buy_streak += 1
         self.sell_streak = 1
 
         return order
 
-    def sell(self, symbol:str, value: float):
+    def sell(self, symbol: str, value: float):
         """
         Sells a dollar amount of a stock
 
@@ -113,13 +113,14 @@ class Stonks:
             dict: Order data
         """
         if self.DEBUG:
-            print({
-                "symbol": symbol,
-                "value": value,
-                "action": "sell"
-            })
+            print({"symbol": symbol, "value": value, "action": "sell"})
 
-        order = orders.order_sell_fractional_by_price(symbol, value, timeInForce='gfd', jsonify=True)
+        order = orders.order_sell_fractional_by_price(
+            symbol,
+            value,
+            timeInForce="gfd",
+            jsonify=True,
+        )
         self.sell_streak += 1
         self.buy_streak = 1
 
@@ -146,20 +147,23 @@ class Stonks:
             print("Market Closed")
             return
 
-        self.prices.append({
-            "time": datetime.now(timezone.utc),
-            "price": latest_price
-        })
+        self.prices.append({"time": datetime.now(timezone.utc), "price": latest_price})
 
-        if len( self.prices ) == 1:
+        if len(self.prices) == 1:
             pass
         elif self.prices[-2]["price"] < self.prices[-1]["price"]:
             # Sell
-            self.get_holdings(self.symbol) * min(self.prices[-1] * self.sell_streak, self.MAX_TRANSACTION_MODIFIER)
+            self.get_holdings(self.symbol) * min(
+                self.prices[-1] * self.sell_streak,
+                self.MAX_TRANSACTION_MODIFIER,
+            )
             self.sell(symbol=self.TICKER, value=1)
         else:
             # Buy
-            self.get_buying_power() * min(self.prices[-1] * self.buy_streak, self.MAX_TRANSACTION_MODIFIER)
+            self.get_buying_power() * min(
+                self.prices[-1] * self.buy_streak,
+                self.MAX_TRANSACTION_MODIFIER,
+            )
             self.buy(symbol=self.TICKER, value=1)
 
 
@@ -167,13 +171,12 @@ def main():
     s = Stonks("SPY", debug=True)
     s.setup()
     schedule.every(10).seconds.do(s.trade)
-    
+
     while True:
         schedule.run_pending()
         print(".", end="")
         time.sleep(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
-    
