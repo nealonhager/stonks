@@ -3,3 +3,4 @@
 .env
 simulate/outputs/*
 logs/*
+notify.py

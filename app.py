@@ -61,20 +61,20 @@ class Stonks:
         buying_power = r.profiles.load_account_profile()["cash_balances"][
             "buying_power"
         ]
-        return buying_power
+        return float(buying_power)
 
-    def get_holdings(self, symbol: str):
+    def get_equity(self, symbol: str):
         """
-        Returns holding info for a symbol
+        Returns equity for a symbol
 
         Args:
             symbol (str): Stock ticker symbol
 
         Returns:
-            dict: Holdings info for symbol
+            float: Equity of symbol
         """
-        holdings = account.build_holdings()[symbol]
-        return holdings
+        equity = account.build_holdings()[symbol]["equity"]
+        return float(equity)
 
     def buy(self, symbol: str, value: float):
         """
@@ -153,18 +153,18 @@ class Stonks:
             pass
         elif self.prices[-2]["price"] < self.prices[-1]["price"]:
             # Sell
-            self.get_holdings(self.symbol) * min(
-                self.prices[-1] * self.sell_streak,
+            amount = self.get_equity(self.TICKER) * min(
+                self.TRANSACTION_MODIFIER * self.sell_streak,
                 self.MAX_TRANSACTION_MODIFIER,
             )
-            self.sell(symbol=self.TICKER, value=1)
+            self.sell(symbol=self.TICKER, value=amount)
         else:
             # Buy
-            self.get_buying_power() * min(
-                self.prices[-1] * self.buy_streak,
+            amount = self.get_buying_power() * min(
+                self.TRANSACTION_MODIFIER * self.buy_streak,
                 self.MAX_TRANSACTION_MODIFIER,
             )
-            self.buy(symbol=self.TICKER, value=1)
+            self.buy(symbol=self.TICKER, value=amount)
 
 
 def main():
