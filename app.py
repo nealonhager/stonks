@@ -6,10 +6,11 @@ import robin_stocks.robinhood.account as account
 import robin_stocks.robinhood.markets as markets
 from dotenv import load_dotenv
 import os
-import json
 import schedule
 import time
 from datetime import datetime, timezone
+from datetime import time as dtt
+import csv
 
 
 class Stonks:
@@ -76,6 +77,24 @@ class Stonks:
         equity = account.build_holdings()[symbol]["equity"]
         return float(equity)
 
+    def log_to_csv(value: float, action: str):
+        """
+        Writes action to log file
+
+        Args:
+            value (float): USD
+            action (str): buy/sell
+        """
+        current_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        with open("logs/log.csv", mode="a", newline="") as log_file:
+            fieldnames = ["datetime", "value", "action"]
+            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
+            if log_file.tell() == 0:
+                writer.writeheader()  # write header only if file is empty
+            writer.writerow(
+                {"datetime": current_time, "value": value, "action": action}
+            )
+
     def buy(self, symbol: str, value: float):
         """
         Buys a dollar amount of a stock
@@ -98,6 +117,7 @@ class Stonks:
         )
         self.buy_streak += 1
         self.sell_streak = 1
+        self.log_to_csv(value, "buy")
 
         return order
 
@@ -123,6 +143,7 @@ class Stonks:
         )
         self.sell_streak += 1
         self.buy_streak = 1
+        self.log_to_csv(value, "sell")
 
         return order
 
@@ -133,9 +154,11 @@ class Stonks:
         Returns:
             bool: Ability to trade
         """
-        market_open = markets.get_market_today_hours("XNYS")["is_open"]
-
-        return market_open
+        # market_open = markets.get_market_today_hours("XNYS")["is_open"]
+        now = datetime.now().time()
+        start_time = dtt(hour=8, minute=30)
+        end_time = dtt(hour=16, minute=30)
+        return start_time <= now <= end_time
 
     def trade(self):
         """
