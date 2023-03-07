@@ -11,6 +11,7 @@ import time
 from datetime import datetime, timezone
 from datetime import time as dtt
 import csv
+import json
 
 
 class Stonks:
@@ -59,9 +60,11 @@ class Stonks:
         Returns:
             float: Buying power (USD)
         """
-        buying_power = r.profiles.load_account_profile()["cash_balances"][
-            "buying_power"
-        ]
+        try:
+            buying_power = r.profiles.load_account_profile()["buying_power"]
+        except Exception as e:
+            print("poo")
+
         return float(buying_power)
 
     def get_equity(self, symbol: str):
@@ -77,7 +80,7 @@ class Stonks:
         equity = account.build_holdings()[symbol]["equity"]
         return float(equity)
 
-    def log_to_csv(value: float, action: str):
+    def log_to_csv(self, value: float, action: str):
         """
         Writes action to log file
 
@@ -107,7 +110,7 @@ class Stonks:
             dict: Order data
         """
         if self.DEBUG:
-            print({"symbol": symbol, "value": value, "action": "buy"})
+            print(symbol, "buy", value)
 
         order = orders.order_buy_fractional_by_price(
             symbol,
@@ -133,7 +136,7 @@ class Stonks:
             dict: Order data
         """
         if self.DEBUG:
-            print({"symbol": symbol, "value": value, "action": "sell"})
+            print(symbol, "sell", value)
 
         order = orders.order_sell_fractional_by_price(
             symbol,
@@ -156,8 +159,8 @@ class Stonks:
         """
         # market_open = markets.get_market_today_hours("XNYS")["is_open"]
         now = datetime.now().time()
-        start_time = dtt(hour=8, minute=30)
-        end_time = dtt(hour=16, minute=30)
+        start_time = dtt(hour=6, minute=30)
+        end_time = dtt(hour=13, minute=0)
         return start_time <= now <= end_time
 
     def trade(self):
@@ -177,14 +180,14 @@ class Stonks:
         elif self.prices[-2]["price"] < self.prices[-1]["price"]:
             # Sell
             amount = self.get_equity(self.TICKER) * min(
-                self.TRANSACTION_MODIFIER * self.sell_streak,
+                self.TRANSACTION_MODIFIER * self.buy_streak,
                 self.MAX_TRANSACTION_MODIFIER,
             )
             self.sell(symbol=self.TICKER, value=amount)
         else:
             # Buy
             amount = self.get_buying_power() * min(
-                self.TRANSACTION_MODIFIER * self.buy_streak,
+                self.TRANSACTION_MODIFIER * self.sell_streak,
                 self.MAX_TRANSACTION_MODIFIER,
             )
             self.buy(symbol=self.TICKER, value=amount)
@@ -193,12 +196,12 @@ class Stonks:
 def main():
     s = Stonks("SPY", debug=True)
     s.setup()
-    schedule.every(10).seconds.do(s.trade)
+    schedule.every(15).seconds.do(s.trade)
 
     while True:
         schedule.run_pending()
         print(".", end="")
-        time.sleep(1)
+        time.sleep(5)
 
 
 if __name__ == "__main__":
